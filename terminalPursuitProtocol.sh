@@ -1,46 +1,23 @@
 #!/bin/bash
 
+declare -A boardMatrix
+numRows=5
+numCols=40
 
-varExample=2
-varTest=4
-
-function f1 {
-    echo "Inside first function $varExample"
-}
-
-function f2 {
-    echo "Inside second function $varTest"
-}
-
-function drawBoard {
-    boardLineJump=10
-    board=(
-        '◼' '◼' '◼' '◼' '◼' '◼' '◼' '◼' '◼' '◼'
-    )
-    for i in ${!board[@]}
-    do
-        echo ${board[$i]}
-        if (( ($i + 1) % 10 == 0 ))
-            then echo '\n'
-        fi
-    done
-}
-
-function bidimensionalBoard {
-    declare -a boardMatrix
-    numRows=9
-    numCols=9
-    for((i=0;i<=numRows;i++)) do
-        for((j=0;j<=numCols;j++)) do
-        boardMatrix[$i,$j]='0'
+function createBoard {
+    for((i=0; i<numRows; i++)) do
+        for((j=0; j <numCols; j++)) do
+        boardMatrix[$i,$j]='.'
         done
     done
+    boardMatrix[0,0]='🛼'
+    boardMatrix[$((numRows-1)),$((numCols-1))]='🚗'
+}
 
+function printBoard {
     displayBoard=''
-    for i in ${!boardMatrix[@]}
-    do
-        for j in {0..9}
-        do
+    for((i=0; i<numRows; i++)) do
+        for((j=0; j<numCols; j++)) do
             displayBoard+=${boardMatrix[$i,$j]}
         done
         displayBoard+='\n'
@@ -48,30 +25,31 @@ function bidimensionalBoard {
     echo -e $displayBoard
 }
 
-function printBoard {
-    displayBoard=''
-    for i in ${board[@]}
-    do
-        displayBoard+=$i'\n'
+function moveBoardObjects {
+    for((i=0; i<numRows; i++)) do
+        for((j=0; j<numCols; j++)) do
+            local char="${boardMatrix[$i,$j]}"
+            if [[ "$char" == "🚗" ]]; then
+                boardMatrix[$i,$j]='.'
+                boardMatrix[$i,$((j-1))]=$char
+            fi
+        done
     done
-    echo -e $displayBoard
 }
 
-declare -a board
-playerPosition=(1 1)
-board[0]='◼◼◼◼◼◼◼◼◼◼'
-board[1]='◼🚓.......◼'
-board[2]='◼........◼'
-board[3]='◼........◼'
-board[4]='◼◼◼◼◼◼◼◼◼◼'
-
-
-#Videogame loop
 clear
+createBoard
+objectsMovementTimer=0
+#Game loop
 while true
 do
+    ((objectsMovementTimer++))
+    if ((objectsMovementTimer==3)); then
+        moveBoardObjects
+        objectsMovementTimer=0
+    fi
     printBoard
-    #Cada 100 ms (10fps)
+    #Every 100 ms (10fps)
     sleep 0.1
     clear
 done
