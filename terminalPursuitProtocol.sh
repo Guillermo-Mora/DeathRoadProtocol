@@ -31,7 +31,9 @@ function moveBoardObjects {
             local char="${boardMatrix[$i,$j]}"
             if [[ "$char" == "🚗" ]]; then
                 boardMatrix[$i,$j]='.'
-                boardMatrix[$i,$((j-1))]=$char
+                if ((j-1 >0)); then
+                    boardMatrix[$i,$((j-1))]=$char
+                fi
             fi
         done
     done
