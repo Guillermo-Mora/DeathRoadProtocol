@@ -93,7 +93,7 @@ while true
 do
     #read for reading keyboard input
     #-n 1 (Read only 1 character per press)
-    #-t (Wait that time after input detected before closing the input read)
+    #-t (Wait that for user input)
     if read -n 1 -t 0.001 key; then
         doKeyPressAction $key
     fi
