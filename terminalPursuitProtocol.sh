@@ -44,7 +44,8 @@ emptyRoadChar='⠀'
 playerChar="${blue}◆${reset}"
 wheelChar='◎'
 treeChar='ψ'
-enemyChar="${red}◄${reset}"
+enemyCarChar="${red}◄${reset}"
+enemyBombChar="${red}☢${reset}"
 ##
 
 ##Player
@@ -76,7 +77,7 @@ function createBoard {
         done
     done
     boardMatrix[0,0]=$playerChar
-    boardMatrix[$((numRows-1)),$((numCols-1))]="$enemyChar"
+    boardMatrix[$((numRows-1)),$((numCols-1))]="$enemyCarChar"
 }
 
 function moveBackground {
@@ -133,11 +134,11 @@ function spawnObjects {
     if $generatesEnemies; then
         local enemiesQuantity
         local enemiesQuantityRandom=$((1 + RANDOM % 100))
-        if (($enemiesQuantityRandom <= 5)); then
+        if ((enemiesQuantityRandom <= 5)); then
             enemiesQuantity=4
-        elif (($enemiesQuantityRandom <= 25)); then
+        elif ((enemiesQuantityRandom <= 25)); then
             enemiesQuantity=3
-        elif (($enemiesQuantityRandom <= 80)); then
+        elif ((enemiesQuantityRandom <= 80)); then
             enemiesQuantity=2
         else
             enemiesQuantity=1
@@ -148,25 +149,30 @@ function spawnObjects {
         boardMatrix[$wheelPosition,$((numCols-1))]="$wheelChar"
     fi
     if $generatesEnemies; then
-        for ((i=0; i<"${#enemiesQuantity}"; i++)); do
-            local enmeyRandomPosition=$((RANDOM % $numRows))
-            local randomPositionCurrentChar="${boardMatrix[$enmeyRandomPosition,$((numCols-1))]}"
-            #Here, do a while loop with the randomPositionCurrentChar in this way:
-            #If the char is not empty and is not player, then the enemyRandomPosition
-            #Will be reasigned as followed: if its between 0-3 it will add 1 and test that position.
-            #If its 4, it will reset to 0 and test that position.
-            #This way, I can reasign new positions doing a loop if the random one is already taken.
-            #And this approach will be better than trying with another random number, as that would end
-            #in very long loops until the last free space is found. Which I don't want to happen.
-            if [[ "$randomPositionCurrentChar" == "$emptyRoadChar" ||
-             "$randomPositionCurrentChar" == "$playerChar" ]]; then
-                echo "Can position object"
-                sleep 20000
+        local enmeyRandomPosition
+        local randomPositionCurrentChar
+        for ((i=0; i<enemiesQuantity; i++))
+        do
+            enmeyRandomPosition=$((RANDOM % $numRows))
+            randomPositionCurrentChar="${boardMatrix[$enmeyRandomPosition,$((numCols-1))]}"
+            while [[ "$randomPositionCurrentChar" != "$emptyRoadChar" &&
+             "$randomPositionCurrentChar" != "$playerChar" ]]
+            do
+                if ((enmeyRandomPosition <= 3)); then
+                    ((enmeyRandomPosition++))
+                else
+                    enmeyRandomPosition=0
+                fi
+                randomPositionCurrentChar="${boardMatrix[$enmeyRandomPosition,$((numCols-1))]}"
+            done
+            local enemyRandomType=$((1 + RANDOM % 100))
+            local enemy
+            if ((enemyRandomType <= 15)); then
+                enemy="$enemyBombChar" 
+            else
+                enemy="$enemyCarChar"
             fi
-
-            #I need to verify that the random number is different from the alread used
-            #ones for other enemies and for the wheel(if exists)
-            echo "generate enemies random positions"
+            boardMatrix[$enmeyRandomPosition,$((numCols-1))]="$enemy"
         done
     fi
 }
@@ -238,7 +244,9 @@ function doKeyPressAction {
                 fi
                 ;;
             d)
-                if ((playerCol + 1 < numCols)); then
+                #I prevent the player to position in the last column, as
+                #it's where the random objects generate.
+                if ((playerCol + 1 < numCols-1)); then
                     boardMatrix[$playerRow,$playerCol]=$emptyRoadChar
                     ((playerCol++))
                     boardMatrix[$playerRow,$playerCol]=$playerChar
