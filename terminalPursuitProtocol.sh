@@ -32,6 +32,7 @@ scoreString="$scoreFillingZeros$score"
 
 ##Player
 playerWheels=4
+playerWheelsString="⊙⠀⊙⠀⊙⠀⊙⠀"
 #Player position
 playerRow=0
 playerCol=0
@@ -40,6 +41,7 @@ playerCol=0
 ##Char types
 emptyRoadChar='-'
 playerChar='🛼'
+playerWheel='⊙'
 treeChar='ψ'
 ##
 
@@ -58,6 +60,8 @@ triggerScorePoint=50
 ##Constants
 scoreLenght=12
 ##
+
+changeLives=true
 
 function createBoard {
     for((i=0; i<numRows; i++)) do
@@ -94,6 +98,24 @@ function scorePoint {
     scoreString="$scoreFillingZeros$score"
 }
 
+function getWheel {
+    if ((playerWheels < 4)); then
+        ((playerWheels++))
+        #I remove last two characters and add a wheel with space at the start
+        playerWheelsString="$playerWheel⠀${playerWheelsString::-2}"
+    fi
+}
+
+function looseWheel {
+    ((playerWheels--))
+    #I remove first two characters and add two filling spaces
+    playerWheelsString="${playerWheelsString:2}⠀⠀"
+    if ((playerWheels == 0)); then
+        echo "The player dies"
+        changeLives=false
+    fi
+}
+
 function printBoard {
     local backgroundTreesString=''
     for i in "${backgroundTrees[@]}"
@@ -101,7 +123,7 @@ function printBoard {
         backgroundTreesString+="$i"
     done
     local displayBoard="┏━━━━━━━━━━━━━━━━┓⠀⠀⠀⠀⠀┏━━━━━━━━━━━━━━━━━┓
-    \n┃⠀SCORE:⠀$scoreString⠀┃⠀⠀⠀⠀⠀┃⠀WHEELS:⠀⊙⠀⊙⠀⊙⠀⊙⠀┃
+    \n┃⠀SCORE:⠀$scoreString⠀┃⠀⠀⠀⠀⠀┃⠀WHEELS:⠀$playerWheelsString┃
     \n┗━━━━━━━━━━━━━━━━┛⠀⠀⠀⠀⠀┗━━━━━━━━━━━━━━━━━┛
     \n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
     \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
