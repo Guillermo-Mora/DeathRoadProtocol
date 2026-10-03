@@ -24,44 +24,50 @@ backgroundTrees=(
 )
 ##
 
+##Constants
+scoreLenght=12
+#Colors
+red=$'\e[31m'
+green=$'\e[32m'
+blue=$'\e[34m'
+reset=$'\e[0m'
+##
+
 ##Score
 score=0
 scoreFillingZeros="000000"
 scoreString="$scoreFillingZeros$score"
 ##
 
+##Char types
+emptyRoadChar='⠀'
+playerChar="${blue}◆${reset}"
+wheelChar='◎'
+treeChar='ψ'
+enemyChar="${red}◄${reset}"
+##
+
 ##Player
 playerWheels=4
-playerWheelsString="⊙⠀⊙⠀⊙⠀⊙⠀"
+playerWheelsString="$wheelChar⠀$wheelChar⠀$wheelChar⠀$wheelChar⠀"
 #Player position
 playerRow=0
 playerCol=0
-##
-
-##Char types
-emptyRoadChar='-'
-playerChar='🛼'
-playerWheel='⊙'
-treeChar='ψ'
 ##
 
 ##Timers
 objectsMovementTimer=0
 backgroundMovementTimer=0
 scorePointsTimer=0
+spawnObjectsTimer=0
 ##
 
 ##Timers limits
 triggerBackgroundMovement=8
 triggerObjectsMovement=10
 triggerScorePoint=50
+triggerSpawnObjects=100
 ##
-
-##Constants
-scoreLenght=12
-##
-
-changeLives=true
 
 function createBoard {
     for((i=0; i<numRows; i++)) do
@@ -70,7 +76,7 @@ function createBoard {
         done
     done
     boardMatrix[0,0]=$playerChar
-    boardMatrix[$((numRows-1)),$((numCols-1))]='☠'
+    boardMatrix[$((numRows-1)),$((numCols-1))]="$enemyChar"
 }
 
 function moveBackground {
@@ -87,9 +93,9 @@ function moveBackground {
     done
 }
 
-function scorePoint {
+function scorePoints {
     local currentScoreLenght="${#score}"
-    ((score++))
+    ((score+=$1))
     local newScoreLenght="${#score}"
     if ((newScoreLenght > currentScoreLenght)); then
         #I remove last character from the filling zeros
@@ -102,7 +108,7 @@ function getWheel {
     if ((playerWheels < 4)); then
         ((playerWheels++))
         #I remove last two characters and add a wheel with space at the start
-        playerWheelsString="$playerWheel⠀${playerWheelsString::-2}"
+        playerWheelsString="$wheelChar⠀${playerWheelsString::-2}"
     fi
 }
 
@@ -112,7 +118,56 @@ function looseWheel {
     playerWheelsString="${playerWheelsString:2}⠀⠀"
     if ((playerWheels == 0)); then
         echo "The player dies"
-        changeLives=false
+    fi
+}
+
+function spawnObjects {
+    local generatesWheel=false
+    local generatesEnemies=false
+    if (((1 + RANDOM % 100) <= 5)); then
+        generatesWheel=true
+    fi
+    if (((1 + RANDOM % 100) <= 95)); then
+        generatesEnemies=true
+    fi
+    if $generatesEnemies; then
+        local enemiesQuantity
+        local enemiesQuantityRandom=$((1 + RANDOM % 100))
+        if (($enemiesQuantityRandom <= 5)); then
+            enemiesQuantity=4
+        elif (($enemiesQuantityRandom <= 25)); then
+            enemiesQuantity=3
+        elif (($enemiesQuantityRandom <= 80)); then
+            enemiesQuantity=2
+        else
+            enemiesQuantity=1
+        fi
+    fi
+    if $generatesWheel; then
+        local wheelPosition=$((RANDOM % $numRows))
+        boardMatrix[$wheelPosition,$((numCols-1))]="$wheelChar"
+    fi
+    if $generatesEnemies; then
+        for ((i=0; i<"${#enemiesQuantity}"; i++)); do
+            local enmeyRandomPosition=$((RANDOM % $numRows))
+            local randomPositionCurrentChar="${boardMatrix[$enmeyRandomPosition,$((numCols-1))]}"
+            #Here, do a while loop with the randomPositionCurrentChar in this way:
+            #If the char is not empty and is not player, then the enemyRandomPosition
+            #Will be reasigned as followed: if its between 0-3 it will add 1 and test that position.
+            #If its 4, it will reset to 0 and test that position.
+            #This way, I can reasign new positions doing a loop if the random one is already taken.
+            #And this approach will be better than trying with another random number, as that would end
+            #in very long loops until the last free space is found. Which I don't want to happen.
+            if [[ "$randomPositionCurrentChar" == "$emptyRoadChar" ||
+             "$randomPositionCurrentChar" == "$playerChar" ]]; then
+                echo "Can position object"
+                sleep 20000
+            fi
+
+            #I need to verify that the random number is different from the alread used
+            #ones for other enemies and for the wheel(if exists)
+            echo "generate enemies random positions"
+        done
     fi
 }
 
@@ -149,7 +204,7 @@ function moveBoardObjects {
     for((i=0; i<numRows; i++)) do
         for((j=0; j<numCols; j++)) do
             local char="${boardMatrix[$i,$j]}"
-            if [[ "$char" == "☠" ]]; then
+            if [[ "$char" != "$emptyRoadChar" && "$char" != "$playerChar" ]]; then
                 boardMatrix[$i,$j]=$emptyRoadChar
                 if ((j-1 >0)); then
                     boardMatrix[$i,$((j-1))]=$char
@@ -214,13 +269,20 @@ do
         backgroundMovementTimer=0
     fi
     if ((scorePointsTimer == triggerScorePoint)); then
-        scorePoint
+        scorePoints 1
         scorePointsTimer=0
     fi
+    if ((spawnObjectsTimer == triggerSpawnObjects)); then
+        spawnObjects
+        spawnObjectsTimer=0
+    fi
     #Add 1 to timers in each frame
-    ((objectsMovementTimer++))
-    ((backgroundMovementTimer++))
-    ((scorePointsTimer++))
+    ((
+        objectsMovementTimer++,
+        backgroundMovementTimer++,
+        scorePointsTimer++,
+        spawnObjectsTimer++
+    ))
     #Every 16.67ms (60fps)
     sleep 0.0166666666667
     #Clear screen after each frame
