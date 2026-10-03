@@ -5,16 +5,37 @@
 #-echo for preventing the key presses to apear on screen
 stty -icanon -echo
 
+#Board Matrix
 declare -A boardMatrix
-
 numRows=5
 numCols=40
+backgroundTrees=(
+    '⠀' '⠀' '⠀' '⠀' 'ψ'
+    '⠀' '⠀' '⠀' '⠀' '⠀'
+    '⠀' '⠀' '⠀' '⠀' 'ψ'
+    '⠀' '⠀' '⠀' '⠀' '⠀'
+    '⠀' '⠀' '⠀' '⠀' 'ψ'
+    '⠀' '⠀' '⠀' '⠀' '⠀'
+    '⠀' '⠀' '⠀' '⠀' 'ψ'
+    '⠀' '⠀' '⠀' '⠀' '⠀'
+)
 
+#Player position
 playerRow=0
 playerCol=0
 
+#Char types
 emptyRoadChar='-'
 playerChar='🛼'
+treeChar='ψ'
+
+#Timers
+objectsMovementTimer=0
+backgroundMovementTimer=0
+
+#TimerLimits
+triggerBackgroundMovement=8
+triggerObjectsMovement=10
 
 function createBoard {
     for((i=0; i<numRows; i++)) do
@@ -26,15 +47,40 @@ function createBoard {
     boardMatrix[$((numRows-1)),$((numCols-1))]='☠'
 }
 
+function moveBackground {
+    for((i=0; i<numCols; i++)) do
+        local currentChar="${backgroundTrees[$i]}"
+        if [[ "$currentChar" == "$treeChar" ]]; then
+            backgroundTrees[$i]='⠀'
+            if (($i-1 >= 0)); then
+                backgroundTrees[$((i-1))]=$treeChar
+            else
+                backgroundTrees[$((numCols-1))]=$treeChar
+            fi
+        fi
+    done
+}
+
 function printBoard {
-    displayBoard='════════════════════════════════════════\n'
+    local backgroundTreesString=''
+    for i in "${backgroundTrees[@]}"
+    do
+        backgroundTreesString+="$i"
+    done
+    local displayBoard="⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+    \n$backgroundTreesString
+    \n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+    \n════════════════════════════════════════\n"
     for((i=0; i<numRows; i++)) do
         for((j=0; j<numCols; j++)) do
             displayBoard+=${boardMatrix[$i,$j]}
         done
         displayBoard+='\n'
     done
-    displayBoard+='════════════════════════════════════════'
+    displayBoard+="════════════════════════════════════════
+    \n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+    \n$backgroundTreesString
+    \n⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
     echo -e $displayBoard
 }
 
@@ -87,7 +133,6 @@ function doKeyPressAction {
 
 clear
 createBoard
-objectsMovementTimer=0
 #Game loop
 while true
 do
@@ -97,13 +142,21 @@ do
     if read -n 1 -t 0.001 key; then
         doKeyPressAction $key
     fi
-    ((objectsMovementTimer++))
+    #((objectsMovementTimer++))
     if ((objectsMovementTimer==10)); then
         moveBoardObjects
         objectsMovementTimer=0
     fi
     printBoard
+    if ((backgroundMovementTimer == triggerBackgroundMovement)); then
+        moveBackground
+        backgroundMovementTimer=0
+    fi
+    #Add 1 to timers in each frame
+    ((objectsMovementTimer++))
+    ((backgroundMovementTimer++))
     #Every 16.67ms (60fps)
     sleep 0.0166666666667
+    #Clear screen after each frame
     clear
 done
