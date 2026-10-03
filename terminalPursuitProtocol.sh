@@ -5,10 +5,13 @@
 #-echo for preventing the key presses to apear on screen
 stty -icanon -echo
 
-#Board Matrix
+##Board
+#Game matrix
 declare -A boardMatrix
+#Game matriz size
 numRows=5
 numCols=40
+#Background array
 backgroundTrees=(
     '⠀' '⠀' '⠀' '⠀' 'ψ'
     '⠀' '⠀' '⠀' '⠀' '⠀'
@@ -19,23 +22,42 @@ backgroundTrees=(
     '⠀' '⠀' '⠀' '⠀' 'ψ'
     '⠀' '⠀' '⠀' '⠀' '⠀'
 )
+##
 
+##Score
+score=0
+scoreFillingZeros="000000"
+scoreString="$scoreFillingZeros$score"
+##
+
+##Player
+playerWheels=4
 #Player position
 playerRow=0
 playerCol=0
+##
 
-#Char types
+##Char types
 emptyRoadChar='-'
 playerChar='🛼'
 treeChar='ψ'
+##
 
-#Timers
+##Timers
 objectsMovementTimer=0
 backgroundMovementTimer=0
+scorePointsTimer=0
+##
 
-#TimerLimits
+##Timers limits
 triggerBackgroundMovement=8
 triggerObjectsMovement=10
+triggerScorePoint=50
+##
+
+##Constants
+scoreLenght=12
+##
 
 function createBoard {
     for((i=0; i<numRows; i++)) do
@@ -61,13 +83,27 @@ function moveBackground {
     done
 }
 
+function scorePoint {
+    local currentScoreLenght="${#score}"
+    ((score++))
+    local newScoreLenght="${#score}"
+    if ((newScoreLenght > currentScoreLenght)); then
+        #I remove last character from the filling zeros
+        scoreFillingZeros="${scoreFillingZeros::-1}"
+    fi
+    scoreString="$scoreFillingZeros$score"
+}
+
 function printBoard {
     local backgroundTreesString=''
     for i in "${backgroundTrees[@]}"
     do
         backgroundTreesString+="$i"
     done
-    local displayBoard="┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    local displayBoard="┏━━━━━━━━━━━━━━━━┓⠀⠀⠀⠀⠀┏━━━━━━━━━━━━━━━━━┓
+    \n┃⠀SCORE:⠀$scoreString⠀┃⠀⠀⠀⠀⠀┃⠀WHEELS:⠀⊙⠀⊙⠀⊙⠀⊙⠀┃
+    \n┗━━━━━━━━━━━━━━━━┛⠀⠀⠀⠀⠀┗━━━━━━━━━━━━━━━━━┛
+    \n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
     \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
     \n┃$backgroundTreesString┃
     \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
@@ -139,25 +175,30 @@ createBoard
 #Game loop
 while true
 do
+    printBoard
     #read for reading keyboard input
     #-n 1 (Read only 1 character per press)
     #-t (Wait that for user input)
     if read -n 1 -t 0.001 key; then
         doKeyPressAction $key
     fi
-    #((objectsMovementTimer++))
-    if ((objectsMovementTimer==10)); then
+    #Check timers
+    if ((objectsMovementTimer == triggerObjectsMovement)); then
         moveBoardObjects
         objectsMovementTimer=0
     fi
-    printBoard
     if ((backgroundMovementTimer == triggerBackgroundMovement)); then
         moveBackground
         backgroundMovementTimer=0
     fi
+    if ((scorePointsTimer == triggerScorePoint)); then
+        scorePoint
+        scorePointsTimer=0
+    fi
     #Add 1 to timers in each frame
     ((objectsMovementTimer++))
     ((backgroundMovementTimer++))
+    ((scorePointsTimer++))
     #Every 16.67ms (60fps)
     sleep 0.0166666666667
     #Clear screen after each frame
