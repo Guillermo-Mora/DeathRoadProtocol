@@ -155,8 +155,7 @@ function spawnObjects {
         do
             enmeyRandomPosition=$((RANDOM % $numRows))
             randomPositionCurrentChar="${boardMatrix[$enmeyRandomPosition,$((numCols-1))]}"
-            while [[ "$randomPositionCurrentChar" != "$emptyRoadChar" &&
-             "$randomPositionCurrentChar" != "$playerChar" ]]
+            while [[ "$randomPositionCurrentChar" != "$emptyRoadChar" ]]
             do
                 if ((enmeyRandomPosition <= 3)); then
                     ((enmeyRandomPosition++))
