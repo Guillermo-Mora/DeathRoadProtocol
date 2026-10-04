@@ -201,7 +201,7 @@ function spawnObjects {
     fi
 }
 
-function printBoard {
+function printFrame {
     local gameStatsRow=0
     local gameStats=(
         "┏━━━━━━━━━━━━━━━━━┓"
@@ -237,6 +237,11 @@ function printBoard {
     \n┃$backgroundTreesString┃
     \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
     \n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
+    #I now do the clear of the screen here to reduce screen flickering as much as possible.
+    #As converting the matrix to a string can also take some CPU time to display
+    #Clear screen each frame after all the calculations have been performed
+    clear
+    #Print the new frame on screen
     echo -e $displayBoard
 }
 
@@ -347,10 +352,8 @@ do
         scorePointsTimer++,
         spawnObjectsTimer++
     ))
-    #Clear screen each frame after all the calculations have been performed
-    clear
-    #Print current state of the board (frame)
-    printBoard
+    #Print current state of the screen (frame)
+    printFrame
     #Every 16.67ms (60fps)
     sleep 0.0166666666667
 done
