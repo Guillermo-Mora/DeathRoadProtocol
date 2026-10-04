@@ -25,7 +25,6 @@ backgroundTrees=(
 ##
 
 ##Constants
-scoreLenght=12
 #Colors
 red=$'\e[31m'
 green=$'\e[32m'
