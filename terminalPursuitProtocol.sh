@@ -235,7 +235,12 @@ function checkCollisions {
             ;;
     esac
     if ((playerRow != previousPlayerRow || playerCol != previousPlayerCol)); then
-        boardMatrix[$previousPlayerRow,$previousPlayerCol]=$emptyRoadChar
+        #The player previous position may now be occuped by an object
+        #So I check it before setting it empty
+        local previousPositionChar="${boardMatrix[$previousPlayerRow,$previousPlayerCol]}"
+        if [[ "$previousPositionChar" == "$playerChar" ]]; then
+            boardMatrix[$previousPlayerRow,$previousPlayerCol]=$emptyRoadChar
+        fi
     fi
     boardMatrix[$playerRow,$playerCol]=$playerChar
 }
