@@ -326,7 +326,7 @@ function doKeyPressAction {
 clear
 createBoard
 #Game loop
-while true
+while [[ $gameOver == false ]]
 do
     #read for reading keyboard input
     #-n 1 (Read only 1 character per press)
@@ -335,9 +335,6 @@ do
         doKeyPressAction $key
     fi
     #Check timers and other things
-    if $gameOver; then
-        break
-    fi
     if ((objectsMovementTimer >= triggerObjectsMovement)); then
         moveBoardObjects
         objectsMovementTimer=0
