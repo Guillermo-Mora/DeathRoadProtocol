@@ -41,7 +41,7 @@ scoreString="$scoreFillingZeros$score"
 
 ##Char types
 emptyRoadChar='⠀'
-playerChar="${blue}◆${reset}"
+playerChar="${blue}●${reset}"
 wheelChar='◎'
 treeChar='ψ'
 enemyCarChar="${red}◄${reset}"
@@ -54,6 +54,8 @@ playerWheelsString="$wheelChar⠀$wheelChar⠀$wheelChar⠀$wheelChar⠀"
 #Player position
 playerRow=0
 playerCol=0
+previousPlayerRow=0
+previousPlayerCol=0
 ##
 
 ##Timers
@@ -125,7 +127,7 @@ function looseWheel {
 function spawnObjects {
     local generatesWheel=false
     local generatesEnemies=false
-    if (((1 + RANDOM % 100) <= 5)); then
+    if (((1 + RANDOM % 100) <= 3)); then
         generatesWheel=true
     fi
     if (((1 + RANDOM % 100) <= 95)); then
@@ -219,39 +221,52 @@ function moveBoardObjects {
     done
 }
 
+function checkCollisions {
+    local newPlayerPositionChar="${boardMatrix[$playerRow,$playerCol]}"
+    case $newPlayerPositionChar in
+        $enemyCarChar)
+            looseWheel
+            ;;
+        $enemyBombChar)
+            looseWheel
+            ;;
+        $wheelChar)
+            getWheel
+            ;;
+    esac
+    if ((playerRow != previousPlayerRow || playerCol != previousPlayerCol)); then
+        boardMatrix[$previousPlayerRow,$previousPlayerCol]=$emptyRoadChar
+    fi
+    boardMatrix[$playerRow,$playerCol]=$playerChar
+}
+
 function doKeyPressAction {
+    previousPlayerCol=$playerCol
+    previousPlayerRow=$playerRow
     case $1 in
-            w)
-                if ((playerRow - 1 >= 0)); then
-                    boardMatrix[$playerRow,$playerCol]=$emptyRoadChar
-                    ((playerRow--))
-                    boardMatrix[$playerRow,$playerCol]=$playerChar
-                fi
-                ;;
-            a)
-                if ((playerCol - 1 >= 0)); then
-                    boardMatrix[$playerRow,$playerCol]=$emptyRoadChar
-                    ((playerCol--))
-                    boardMatrix[$playerRow,$playerCol]=$playerChar
-                fi
-                ;;
-            s)
-                if ((playerRow + 1 < numRows)); then
-                    boardMatrix[$playerRow,$playerCol]=$emptyRoadChar
-                    ((playerRow++))
-                    boardMatrix[$playerRow,$playerCol]=$playerChar
-                fi
-                ;;
-            d)
-                #I prevent the player to position in the last column, as
-                #it's where the random objects generate.
-                if ((playerCol + 1 < numCols-1)); then
-                    boardMatrix[$playerRow,$playerCol]=$emptyRoadChar
-                    ((playerCol++))
-                    boardMatrix[$playerRow,$playerCol]=$playerChar
-                fi
-                ;;
-        esac
+        w)
+            if ((playerRow - 1 >= 0)); then
+                ((playerRow--))
+            fi
+            ;;
+        a)
+            if ((playerCol - 1 >= 0)); then
+                ((playerCol--))
+            fi
+            ;;
+        s)
+            if ((playerRow + 1 < numRows)); then
+                ((playerRow++))
+            fi
+            ;;
+        d)
+            #I prevent the player to position in the last column, as
+            #it's where the random objects generate.
+            if ((playerCol + 1 < numCols-1)); then
+                ((playerCol++))
+            fi
+            ;;
+    esac
 }
 
 clear
@@ -259,7 +274,6 @@ createBoard
 #Game loop
 while true
 do
-    printBoard
     #read for reading keyboard input
     #-n 1 (Read only 1 character per press)
     #-t (Wait that for user input)
@@ -271,6 +285,10 @@ do
         moveBoardObjects
         objectsMovementTimer=0
     fi
+    if ((spawnObjectsTimer == triggerSpawnObjects)); then
+        spawnObjects
+        spawnObjectsTimer=0
+    fi
     if ((backgroundMovementTimer == triggerBackgroundMovement)); then
         moveBackground
         backgroundMovementTimer=0
@@ -279,10 +297,8 @@ do
         scorePoints 1
         scorePointsTimer=0
     fi
-    if ((spawnObjectsTimer == triggerSpawnObjects)); then
-        spawnObjects
-        spawnObjectsTimer=0
-    fi
+    #On each frame, I check for collisions with the player
+    checkCollisions
     #Add 1 to timers in each frame
     ((
         objectsMovementTimer++,
@@ -290,6 +306,8 @@ do
         scorePointsTimer++,
         spawnObjectsTimer++
     ))
+    #Print current state of the board (frame)
+    printBoard
     #Every 16.67ms (60fps)
     sleep 0.0166666666667
     #Clear screen after each frame
