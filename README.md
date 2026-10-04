@@ -19,3 +19,7 @@ chmod +x terminalPursuitProtocol.sh
 ```bash
 ./terminalPursuitProtocol.sh
 ```
+
+## Important
+
+Depending on the terminal emulator you are using to run the game, some screen flickering can be percieved. I reduced this screen flickering as much as I could, but it's still a little noticeable when running the game in some terminal emulators. From my testing, the game runs with no screen flickering in the ```Konsole``` terminal emulator. There are probably more where no screen flickering appears, but I've only tested like 4 different terminal emulators.
