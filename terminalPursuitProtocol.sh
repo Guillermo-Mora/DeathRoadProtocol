@@ -40,7 +40,7 @@ scoreString="$scoreFillingZeros$score"
 
 #Level
 level=0
-levelFillingSpaces="⠀⠀"
+levelFillingSpaces="⠀⠀⠀⠀⠀⠀"
 levelString="$levelFillingSpaces$level"
 
 ##Char types
@@ -211,7 +211,7 @@ function printBoard {
         "┃⠀SCORE:⠀⠀$scoreString⠀┃" 
         "┗━━━━━━━━━━━━━━━━━┛" 
         "┏━━━━━━━━━━━━━━━━━┓" 
-        "┃⠀LEVEL:⠀⠀⠀⠀⠀⠀$levelString⠀┃" 
+        "┃⠀LEVEL:⠀⠀$levelString⠀┃" 
         "┗━━━━━━━━━━━━━━━━━┛" 
     )
     local backgroundTreesString=''
