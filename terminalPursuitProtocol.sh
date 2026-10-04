@@ -240,6 +240,9 @@ function printFrame {
     #I now do the clear of the screen here to reduce screen flickering as much as possible.
     #As converting the matrix to a string can also take some CPU time to display
     #Clear screen each frame after all the calculations have been performed
+    #This is what causes flickering on some terminal emulators, as all the screen
+    #is being cleared and generated again, and not the moving parts only. However, I still don't
+    #know how to solve this.
     clear
     #Print the new frame on screen
     echo -e $displayBoard
