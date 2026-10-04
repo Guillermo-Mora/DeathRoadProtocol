@@ -38,6 +38,11 @@ scoreFillingZeros="000000"
 scoreString="$scoreFillingZeros$score"
 ##
 
+#Level
+level=0
+levelFillingSpaces="⠀⠀"
+levelString="$levelFillingSpaces$level"
+
 ##Char types
 emptyRoadChar='⠀'
 playerChar="${blue}●${reset}"
@@ -93,6 +98,25 @@ function moveBackground {
             fi
         fi
     done
+}
+
+function levelUp {
+    local currentLevelLenght="${#level}"
+    ((level++))
+    local newLevelLenght="${#level}"
+    if ((newLevelLenght > currentLevelLenght)); then
+        levelFillingSpaces="${levelFillingSpaces::-1}"
+    fi
+    levelString="$levelFillingSpaces$level"
+    if ((triggerObjectsMovement > 1)); then
+        ((triggerObjectsMovement--))
+    fi
+    if ((triggerSpawnObjects > 15)); then
+        ((triggerSpawnObjects -= 5))
+    fi
+    if ((level % 2 == 0 && triggerBackgroundMovement > 2)); then
+        ((triggerBackgroundMovement--))
+    fi
 }
 
 function scorePoints {
@@ -178,25 +202,35 @@ function spawnObjects {
 }
 
 function printBoard {
+    local gameStatsRow=0
+    local gameStats=(
+        "┏━━━━━━━━━━━━━━━━━┓"
+        "┃⠀WHEELS:⠀$playerWheelsString┃"
+        "┗━━━━━━━━━━━━━━━━━┛"
+        "┏━━━━━━━━━━━━━━━━━┓" 
+        "┃⠀SCORE:⠀⠀$scoreString⠀┃" 
+        "┗━━━━━━━━━━━━━━━━━┛" 
+        "┏━━━━━━━━━━━━━━━━━┓" 
+        "┃⠀LEVEL:⠀⠀⠀⠀⠀⠀$levelString⠀┃" 
+        "┗━━━━━━━━━━━━━━━━━┛" 
+    )
     local backgroundTreesString=''
     for i in "${backgroundTrees[@]}"
     do
         backgroundTreesString+="$i"
     done
-    local displayBoard="┏━━━━━━━━━━━━━━━━┓⠀⠀⠀⠀⠀┏━━━━━━━━━━━━━━━━━┓
-    \n┃⠀SCORE:⠀$scoreString⠀┃⠀⠀⠀⠀⠀┃⠀WHEELS:⠀$playerWheelsString┃
-    \n┗━━━━━━━━━━━━━━━━┛⠀⠀⠀⠀⠀┗━━━━━━━━━━━━━━━━━┛
-    \n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-    \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
-    \n┃$backgroundTreesString┃
-    \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
-    \n┃════════════════════════════════════════┃\n"
+    local displayBoard="
+    \n┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${gameStats[$((gameStatsRow++))]}
+    \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃${gameStats[$((gameStatsRow++))]}
+    \n┃$backgroundTreesString┃${gameStats[$((gameStatsRow++))]}
+    \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃${gameStats[$((gameStatsRow++))]}
+    \n┃════════════════════════════════════════┃${gameStats[$((gameStatsRow++))]}\n"
     for((i=0; i<numRows; i++)) do
         displayBoard+='┃'
         for((j=0; j<numCols; j++)) do
             displayBoard+=${boardMatrix[$i,$j]}
         done
-        displayBoard+='┃\n'
+        displayBoard+="┃${gameStats[$((gameStatsRow++))]}\n"
     done
     displayBoard+="┃════════════════════════════════════════┃
     \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
@@ -212,7 +246,7 @@ function moveBoardObjects {
             local char="${boardMatrix[$i,$j]}"
             if [[ "$char" != "$emptyRoadChar" && "$char" != "$playerChar" ]]; then
                 boardMatrix[$i,$j]=$emptyRoadChar
-                if ((j-1 >0)); then
+                if ((j-1 >= 0)); then
                     boardMatrix[$i,$((j-1))]=$char
                 fi
             fi
@@ -285,20 +319,23 @@ do
         doKeyPressAction $key
     fi
     #Check timers
-    if ((objectsMovementTimer == triggerObjectsMovement)); then
+    if ((objectsMovementTimer >= triggerObjectsMovement)); then
         moveBoardObjects
         objectsMovementTimer=0
     fi
-    if ((spawnObjectsTimer == triggerSpawnObjects)); then
+    if ((spawnObjectsTimer >= triggerSpawnObjects)); then
         spawnObjects
         spawnObjectsTimer=0
     fi
-    if ((backgroundMovementTimer == triggerBackgroundMovement)); then
+    if ((backgroundMovementTimer >= triggerBackgroundMovement)); then
         moveBackground
         backgroundMovementTimer=0
     fi
     if ((scorePointsTimer == triggerScorePoint)); then
         scorePoints 1
+        if ((score % 10 == 0)); then
+            levelUp
+        fi
         scorePointsTimer=0
     fi
     #On each frame, I check for collisions with the player
