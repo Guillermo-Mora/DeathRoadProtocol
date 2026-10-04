@@ -76,6 +76,10 @@ triggerScorePoint=50
 triggerSpawnObjects=100
 ##
 
+#Game state
+gameOver=false
+##
+
 function createBoard {
     for((i=0; i<numRows; i++)) do
         for((j=0; j <numCols; j++)) do
@@ -139,11 +143,15 @@ function getWheel {
 }
 
 function looseWheel {
-    ((playerWheels--))
+    ((playerWheels-=$1))
+    local emptyChars
+    for ((i=0; i<$1; i++)); do
+        emptyChars+="⠀⠀"
+    done
     #I remove first two characters and add two filling spaces
-    playerWheelsString="${playerWheelsString:2}⠀⠀"
-    if ((playerWheels == 0)); then
-        echo "The player dies"
+    playerWheelsString="${playerWheelsString:${#emptyChars}}$emptyChars"
+    if ((playerWheels <= 0)); then
+        gameOver=true
     fi
 }
 
@@ -266,10 +274,10 @@ function checkCollisions {
     local newPlayerPositionChar="${boardMatrix[$playerRow,$playerCol]}"
     case $newPlayerPositionChar in
         $enemyCarChar)
-            looseWheel
+            looseWheel 1
             ;;
         $enemyBombChar)
-            looseWheel
+            looseWheel $playerWheels
             ;;
         $wheelChar)
             getWheel
@@ -326,7 +334,10 @@ do
     if read -n 1 -t 0.001 key; then
         doKeyPressAction $key
     fi
-    #Check timers
+    #Check timers and other things
+    if $gameOver; then
+        break
+    fi
     if ((objectsMovementTimer >= triggerObjectsMovement)); then
         moveBoardObjects
         objectsMovementTimer=0
@@ -360,3 +371,7 @@ do
     #Every 16.67ms (60fps)
     sleep 0.0166666666667
 done
+clear
+echo "GAME OVER ☠"
+#I restore the default terminal state before closing the game.
+stty icanon echo
