@@ -347,10 +347,10 @@ do
         scorePointsTimer++,
         spawnObjectsTimer++
     ))
+    #Clear screen each frame after all the calculations have been performed
+    clear
     #Print current state of the board (frame)
     printBoard
     #Every 16.67ms (60fps)
     sleep 0.0166666666667
-    #Clear screen after each frame
-    clear
 done
