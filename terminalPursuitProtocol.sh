@@ -29,7 +29,8 @@ backgroundTrees=(
 red=$'\e[31m'
 green=$'\e[32m'
 blue=$'\e[34m'
-reset=$'\e[0m'
+yellow=$'\e[33m'
+defaultColor=$'\e[0m'
 ##
 
 ##Score
@@ -45,11 +46,13 @@ levelString="$levelFillingSpaces$level"
 
 ##Char types
 emptyRoadChar='⠀'
-playerChar="${blue}●${reset}"
+playerChar="${blue}●${defaultColor}"
 wheelChar='◎'
+heartChar="${green}❤${defaultColor}"
+starChar="${yellow}★${defaultColor}"
 treeChar='ψ'
-enemyCarChar="${red}◄${reset}"
-enemyBombChar="${red}☢${reset}"
+enemyCarChar="${red}◄${defaultColor}"
+enemyBombChar="${red}☢${defaultColor}"
 ##
 
 ##Player
