@@ -88,6 +88,76 @@ triggerSpawnObjects=100
 isGameOver=false
 ##
 
+function gameMenu {
+    local optionSelected
+    while true; do
+        clear
+        echo "
+GAME TITLE HERE, AS THE CURRENT ONE IS NOT WHAT THE ACTUAL GAME DOES
+
+
+⠀→⠀Press a number to select an option⠀
+┏━━━┓⠀┏━━━━━━━━━━━━━━┓
+┃⠀1⠀┃⠀┃⠀NEW GAME⠀⠀⠀⠀⠀┃
+┗━━━┛⠀┗━━━━━━━━━━━━━━┛
+┏━━━┓⠀┏━━━━━━━━━━━━━━┓
+┃⠀2⠀┃⠀┃⠀HOW TO PLAY⠀⠀┃
+┗━━━┛⠀┗━━━━━━━━━━━━━━┛
+┏━━━┓⠀┏━━━━━━━━━━━━━━┓
+┃⠀3⠀┃⠀┃⠀EXIT⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
+┗━━━┛⠀┗━━━━━━━━━━━━━━┛
+
+
+⋄ GitHub: https://github.com/Guillermo-Mora/TerminalPursuitProtocol
+"
+        while true; do
+            read -n 1 optionSelected
+            case "$optionSelected" in
+                1)
+                    newGame
+                    break
+                    ;;
+                2)
+                    howToPlayMenu
+                    break
+                    ;;
+                3)
+                    #I restore the default terminal state before closing the game.
+                    stty icanon echo
+                    clear
+                    exit 0
+                    ;;
+            esac
+        done
+    done
+}
+
+function howToPlayMenu {
+    clear
+    echo -e "
+⋄⠀CONTROLS
+
+⠀⠀⠀⠀⠀┏━━━┓
+⠀⠀⠀⠀⠀┃⠀w⠀┃
+⠀⠀⠀⠀⠀┗━━━┛
+┏━━━┓┏━━━┓┏━━━┓
+┃⠀A⠀┃┃⠀S⠀┃┃⠀D⠀┃
+┗━━━┛┗━━━┛┗━━━┛
+
+⋄⠀OBJECTS
+
+$wheelChar [Wheel] It restores you a wheel
+$heartChar [Heart] It restores you all missing wheels
+$starChar [Star] Makes you invincible for 10 seconds
+$enemyCarChar [Enemy car] Breaks you a wheel
+$enemyBombChar [Bomb] Blows your car into a thousand pieces
+
+
+⠀→⠀Press any key to return to main menu⠀
+"
+read -n 1
+}
+
 function createBoard {
     for((i=0; i<numRows; i++)) do
         for((j=0; j <numCols; j++)) do
@@ -369,72 +439,73 @@ function doKeyPressAction {
     esac
 }
 
-clear
-createBoard
-#Game loop
-while [[ $isGameOver == false ]]
-do
-    #read for reading keyboard input
-    #-n 1 (Read only 1 character per press)
-    #-t (Wait that for user input)
-    if read -n 1 -t 0.001 key; then
-        doKeyPressAction $key
-    fi
-    #Check timers
-    if ((objectsMovementTimer >= triggerObjectsMovement)); then
-        moveBoardObjects
-        objectsMovementTimer=0
-    fi
-    if ((spawnObjectsTimer >= triggerSpawnObjects)); then
-        spawnObjects
-        spawnObjectsTimer=0
-    fi
-    if ((backgroundMovementTimer >= triggerBackgroundMovement)); then
-        moveBackground
-        backgroundMovementTimer=0
-    fi
-    if ((scorePointsTimer == triggerScorePoint)); then
-        scorePoints 1
-        if ((score % 10 == 0)); then
-            levelUp
+function newGame {
+    clear
+    createBoard
+    #Game loop
+    while [[ $isGameOver == false ]]; do
+        #read for reading keyboard input
+        #-n 1 (Read only 1 character per press)
+        #-t (Wait that for user input)
+        if read -n 1 -t 0.001 key; then
+            doKeyPressAction $key
         fi
-        scorePointsTimer=0
-    fi
-    #Blinking animation on the last 100 ticks of ivnincibility
-    if [[ $isPlayerInvincible == true ]]; then
-        if ((invincibilityTimer >= 400 && invincibilityTimer % 10 == 0)); then
-            if [[ $playerChar == "$playerInvincibleChar" ]]; then
-                playerChar="$playerDefaultChar"
-            else
-                playerChar="$playerInvincibleChar"
+        #Check timers
+        if ((objectsMovementTimer >= triggerObjectsMovement)); then
+            moveBoardObjects
+            objectsMovementTimer=0
+        fi
+        if ((spawnObjectsTimer >= triggerSpawnObjects)); then
+            spawnObjects
+            spawnObjectsTimer=0
+        fi
+        if ((backgroundMovementTimer >= triggerBackgroundMovement)); then
+            moveBackground
+            backgroundMovementTimer=0
+        fi
+        if ((scorePointsTimer == triggerScorePoint)); then
+            scorePoints 1
+            if ((score % 10 == 0)); then
+                levelUp
+            fi
+            scorePointsTimer=0
+        fi
+        #Blinking animation on the last 100 ticks of ivnincibility
+        if [[ $isPlayerInvincible == true ]]; then
+            if ((invincibilityTimer >= 400 && invincibilityTimer % 10 == 0)); then
+                if [[ $playerChar == "$playerInvincibleChar" ]]; then
+                    playerChar="$playerDefaultChar"
+                else
+                    playerChar="$playerInvincibleChar"
+                fi
             fi
         fi
-    fi
-    #On each frame, I check for collisions with the player
-    checkCollisions
-    #This timer has to be checked after collisions. If not, the last frame a player
-    #is invincible it could recieve damage, wihch shouldn't happen
-    if [[ $isPlayerInvincible == true ]]; then
-        if ((invincibilityTimer == triggerEndInvincibility)); then
-            endInvincibility
+        #On each frame, I check for collisions with the player
+        checkCollisions
+        #This timer has to be checked after collisions. If not, the last frame a player
+        #is invincible it could recieve damage, wihch shouldn't happen
+        if [[ $isPlayerInvincible == true ]]; then
+            if ((invincibilityTimer == triggerEndInvincibility)); then
+                endInvincibility
+            fi
         fi
-    fi
-    #Add 1 to timers in each frame
-    ((
-        objectsMovementTimer++,
-        backgroundMovementTimer++,
-        scorePointsTimer++,
-        spawnObjectsTimer++
-    ))
-    if [[ $isPlayerInvincible == true ]]; then
-        ((invincibilityTimer++))
-    fi
-    #Print current state of the screen (frame)
-    printFrame
-    #Every 16.67ms (60fps)
-    sleep 0.0166666666667
-done
-clear
-echo "GAME OVER ☠"
-#I restore the default terminal state before closing the game.
-stty icanon echo
+        #Add 1 to timers in each frame
+        ((
+            objectsMovementTimer++,
+            backgroundMovementTimer++,
+            scorePointsTimer++,
+            spawnObjectsTimer++
+        ))
+        if [[ $isPlayerInvincible == true ]]; then
+            ((invincibilityTimer++))
+        fi
+        #Print current state of the screen (frame)
+        printFrame
+        #Every 16.67ms (60fps)
+        sleep 0.0166666666667
+    done
+    clear
+    echo "GAME OVER ☠"
+}
+
+gameMenu
