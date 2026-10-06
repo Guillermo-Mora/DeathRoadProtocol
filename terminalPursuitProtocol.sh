@@ -46,7 +46,9 @@ levelString="$levelFillingSpaces$level"
 
 ##Char types
 emptyRoadChar='⠀'
-playerChar="${blue}●${defaultColor}"
+playerDefaultChar="${blue}●${defaultColor}"
+playerInvincibleChar="${yellow}●${defaultColor}"
+playerChar="$playerDefaultChar"
 wheelChar='◎'
 heartChar="${green}❤${defaultColor}"
 starChar="${yellow}★${defaultColor}"
@@ -58,10 +60,11 @@ enemyBombChar="${red}☢${defaultColor}"
 ##Player
 playerWheels=4
 playerWheelsString="$wheelChar⠀$wheelChar⠀$wheelChar⠀$wheelChar⠀"
+isPlayerInvincible=false
 #Player position
-playerRow=0
+playerRow=2
 playerCol=0
-previousPlayerRow=0
+previousPlayerRow=2
 previousPlayerCol=0
 ##
 
@@ -70,9 +73,11 @@ objectsMovementTimer=0
 backgroundMovementTimer=0
 scorePointsTimer=0
 spawnObjectsTimer=0
+invincibilityTimer=0
 ##
 
 ##Timers limits
+triggerEndInvincibility=500
 triggerBackgroundMovement=8
 triggerObjectsMovement=10
 triggerScorePoint=50
@@ -80,7 +85,7 @@ triggerSpawnObjects=100
 ##
 
 #Game state
-gameOver=false
+isGameOver=false
 ##
 
 function createBoard {
@@ -89,8 +94,7 @@ function createBoard {
         boardMatrix[$i,$j]=$emptyRoadChar
         done
     done
-    boardMatrix[0,0]=$playerChar
-    boardMatrix[$((numRows-1)),$((numCols-1))]="$enemyCarChar"
+    boardMatrix[2,0]=$playerChar
 }
 
 function moveBackground {
@@ -118,7 +122,7 @@ function levelUp {
     if ((triggerObjectsMovement > 1)); then
         ((triggerObjectsMovement--))
     fi
-    if ((triggerSpawnObjects > 15)); then
+    if ((triggerSpawnObjects > 5)); then
         ((triggerSpawnObjects -= 5))
     fi
     if ((level % 2 == 0 && triggerBackgroundMovement > 2)); then
@@ -131,17 +135,20 @@ function scorePoints {
     ((score+=$1))
     local newScoreLenght="${#score}"
     if ((newScoreLenght > currentScoreLenght)); then
-        #I remove last character from the filling zeros
-        scoreFillingZeros="${scoreFillingZeros::-1}"
+        local zerosToRemove=$((newScoreLenght-currentScoreLenght))
+        scoreFillingZeros="${scoreFillingZeros::-zerosToRemove}"
     fi
     scoreString="$scoreFillingZeros$score"
 }
 
 function getWheel {
     if ((playerWheels < 4)); then
-        ((playerWheels++))
-        #I remove last two characters and add a wheel with space at the start
-        playerWheelsString="$wheelChar⠀${playerWheelsString::-2}"
+        ((playerWheels+=$1))
+        local wheelChars
+        for ((i=0; i<$1; i++)); do
+            wheelChars+="$wheelChar⠀"
+        done
+        playerWheelsString="$wheelChars${playerWheelsString::$((-$1*2))}"
     fi
 }
 
@@ -151,25 +158,35 @@ function looseWheel {
     for ((i=0; i<$1; i++)); do
         emptyChars+="⠀⠀"
     done
-    #I remove first two characters and add two filling spaces
-    playerWheelsString="${playerWheelsString:${#emptyChars}}$emptyChars"
+    playerWheelsString="${playerWheelsString:$(($1*2))}$emptyChars"
     if ((playerWheels <= 0)); then
-        gameOver=true
+        isGameOver=true
     fi
 }
 
+function becomeInvincible {
+    isPlayerInvincible=true
+    playerChar="$playerInvincibleChar"
+    invincibilityTimer=0
+}
+
+function endInvincibility {
+    isPlayerInvincible=false
+    playerChar="$playerDefaultChar"
+}
+
 function spawnObjects {
-    local generatesWheel=false
+    local generatesPowerUp=false
     local generatesEnemies=false
-    if (((1 + RANDOM % 100) <= 3)); then
-        generatesWheel=true
+    if ((RANDOM++ % 100 <= 12)); then
+        generatesPowerUp=true
     fi
-    if (((1 + RANDOM % 100) <= 95)); then
+    if ((RANDOM++ % 100 <= 95)); then
         generatesEnemies=true
     fi
     if $generatesEnemies; then
         local enemiesQuantity
-        local enemiesQuantityRandom=$((1 + RANDOM % 100))
+        local enemiesQuantityRandom=$((RANDOM++ % 100))
         if ((enemiesQuantityRandom <= 5)); then
             enemiesQuantity=4
         elif ((enemiesQuantityRandom <= 25)); then
@@ -180,9 +197,18 @@ function spawnObjects {
             enemiesQuantity=1
         fi
     fi
-    if $generatesWheel; then
-        local wheelPosition=$((RANDOM % $numRows))
-        boardMatrix[$wheelPosition,$((numCols-1))]="$wheelChar"
+    if $generatesPowerUp; then
+        local powerUpChar
+        local powerUpRandom=$((RANDOM++ % 100))
+        if ((powerUpRandom <= 15)); then
+            powerUpChar="$starChar"
+        elif ((powerUpRandom <= 32)); then
+            powerUpChar="$heartChar"
+        else
+            powerUpChar="$wheelChar"
+        fi
+        local powerUpPosition=$((RANDOM % $numRows))
+        boardMatrix[$powerUpPosition,$((numCols-1))]="$powerUpChar"
     fi
     if $generatesEnemies; then
         local enmeyRandomPosition
@@ -200,7 +226,7 @@ function spawnObjects {
                 fi
                 randomPositionCurrentChar="${boardMatrix[$enmeyRandomPosition,$((numCols-1))]}"
             done
-            local enemyRandomType=$((1 + RANDOM % 100))
+            local enemyRandomType=$((RANDOM++ % 100))
             local enemy
             if ((enemyRandomType <= 15)); then
                 enemy="$enemyBombChar" 
@@ -277,20 +303,37 @@ function checkCollisions {
     local newPlayerPositionChar="${boardMatrix[$playerRow,$playerCol]}"
     case $newPlayerPositionChar in
         $enemyCarChar)
-            looseWheel 1
+            if [[ $isPlayerInvincible == false ]]; then
+                looseWheel 1
+            else
+                scorePoints 10
+            fi
             ;;
         $enemyBombChar)
-            looseWheel $playerWheels
+            if [[ $isPlayerInvincible == false ]]; then
+                looseWheel $playerWheels
+            else
+                scorePoints 20
+            fi
             ;;
         $wheelChar)
-            getWheel
+            getWheel 1
+            scorePoints 10
+            ;;
+        $heartChar)
+            getWheel $((4 - playerWheels))
+            scorePoints 50
+            ;;
+        $starChar)
+            becomeInvincible
+            scorePoints 50
             ;;
     esac
     if ((playerRow != previousPlayerRow || playerCol != previousPlayerCol)); then
         #The player previous position may now be occuped by an object
         #So I check it before setting it empty
         local previousPositionChar="${boardMatrix[$previousPlayerRow,$previousPlayerCol]}"
-        if [[ "$previousPositionChar" == "$playerChar" ]]; then
+        if [[ "$previousPositionChar" == "$playerDefaultChar" || "$previousPositionChar" == "$playerInvincibleChar" ]]; then
             boardMatrix[$previousPlayerRow,$previousPlayerCol]=$emptyRoadChar
         fi
     fi
@@ -329,7 +372,7 @@ function doKeyPressAction {
 clear
 createBoard
 #Game loop
-while [[ $gameOver == false ]]
+while [[ $isGameOver == false ]]
 do
     #read for reading keyboard input
     #-n 1 (Read only 1 character per press)
@@ -337,7 +380,7 @@ do
     if read -n 1 -t 0.001 key; then
         doKeyPressAction $key
     fi
-    #Check timers and other things
+    #Check timers
     if ((objectsMovementTimer >= triggerObjectsMovement)); then
         moveBoardObjects
         objectsMovementTimer=0
@@ -357,8 +400,25 @@ do
         fi
         scorePointsTimer=0
     fi
+    #Blinking animation on the last 100 ticks of ivnincibility
+    if [[ $isPlayerInvincible == true ]]; then
+        if ((invincibilityTimer >= 400 && invincibilityTimer % 10 == 0)); then
+            if [[ $playerChar == "$playerInvincibleChar" ]]; then
+                playerChar="$playerDefaultChar"
+            else
+                playerChar="$playerInvincibleChar"
+            fi
+        fi
+    fi
     #On each frame, I check for collisions with the player
     checkCollisions
+    #This timer has to be checked after collisions. If not, the last frame a player
+    #is invincible it could recieve damage, wihch shouldn't happen
+    if [[ $isPlayerInvincible == true ]]; then
+        if ((invincibilityTimer == triggerEndInvincibility)); then
+            endInvincibility
+        fi
+    fi
     #Add 1 to timers in each frame
     ((
         objectsMovementTimer++,
@@ -366,6 +426,9 @@ do
         scorePointsTimer++,
         spawnObjectsTimer++
     ))
+    if [[ $isPlayerInvincible == true ]]; then
+        ((invincibilityTimer++))
+    fi
     #Print current state of the screen (frame)
     printFrame
     #Every 16.67ms (60fps)
