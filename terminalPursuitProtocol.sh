@@ -5,12 +5,14 @@
 #-echo for preventing the key presses to apear on screen
 stty -icanon -echo
 
-##Board
+## GLOBAL VARIABLES ##
 #Game matrix
 declare -A boardMatrix
+
 #Game matriz size
 numRows=5
 numCols=40
+
 #Background array
 backgroundTrees=(
     '⠀' '⠀' '⠀' '⠀' 'ψ'
@@ -22,29 +24,15 @@ backgroundTrees=(
     '⠀' '⠀' '⠀' '⠀' 'ψ'
     '⠀' '⠀' '⠀' '⠀' '⠀'
 )
-##
 
-##Constants
 #Colors
 red=$'\e[31m'
 green=$'\e[32m'
 blue=$'\e[34m'
 yellow=$'\e[33m'
 defaultColor=$'\e[0m'
-##
 
-##Score
-score=0
-scoreFillingZeros="000000"
-scoreString="$scoreFillingZeros$score"
-##
-
-#Level
-level=0
-levelFillingSpaces="⠀⠀⠀⠀⠀⠀"
-levelString="$levelFillingSpaces$level"
-
-##Char types
+#Char types
 emptyRoadChar='⠀'
 playerDefaultChar="${blue}●${defaultColor}"
 playerInvincibleChar="${yellow}●${defaultColor}"
@@ -55,39 +43,9 @@ starChar="${yellow}★${defaultColor}"
 treeChar='ψ'
 enemyCarChar="${red}◄${defaultColor}"
 enemyBombChar="${red}☢${defaultColor}"
-##
 
-##Player
-playerWheels=4
-playerWheelsString="$wheelChar⠀$wheelChar⠀$wheelChar⠀$wheelChar⠀"
-isPlayerInvincible=false
-#Player position
-playerRow=2
-playerCol=0
-previousPlayerRow=2
-previousPlayerCol=0
-##
 
-##Timers
-objectsMovementTimer=0
-backgroundMovementTimer=0
-scorePointsTimer=0
-spawnObjectsTimer=0
-invincibilityTimer=0
-##
-
-##Timers limits
-triggerEndInvincibility=500
-triggerBackgroundMovement=8
-triggerObjectsMovement=10
-triggerScorePoint=50
-triggerSpawnObjects=100
-##
-
-#Game state
-isGameOver=false
-##
-
+## MENUS ##
 function gameMenu {
     local optionSelected
     while true; do
@@ -114,6 +72,8 @@ GAME TITLE HERE, AS THE CURRENT ONE IS NOT WHAT THE ACTUAL GAME DOES
             read -n 1 optionSelected
             case "$optionSelected" in
                 1)
+                    setGameVariables
+                    createBoard
                     newGame
                     break
                     ;;
@@ -158,6 +118,51 @@ $enemyBombChar [Bomb] Blows your car into a thousand pieces
 read -n 1
 }
 
+
+## PREPARE NEW GAME ##
+function setGameVariables {
+    #Score
+    score=0
+    scoreFillingZeros="000000"
+    scoreString="$scoreFillingZeros$score"
+    
+    #Level
+    level=0
+    levelFillingSpaces="⠀⠀⠀⠀⠀⠀"
+    levelString="$levelFillingSpaces$level"
+
+    #Wheels
+    playerWheels=4
+    playerWheelsString="$wheelChar⠀$wheelChar⠀$wheelChar⠀$wheelChar⠀"
+    
+    #Player
+    playerChar="$playerDefaultChar"
+    isPlayerInvincible=false
+    
+    #Player position
+    playerRow=2
+    playerCol=0
+    previousPlayerRow=2
+    previousPlayerCol=0
+    
+    #Timers
+    objectsMovementTimer=0
+    backgroundMovementTimer=0
+    scorePointsTimer=0
+    spawnObjectsTimer=0
+    invincibilityTimer=0
+    
+    #Timers limits
+    triggerEndInvincibility=500
+    triggerBackgroundMovement=8
+    triggerObjectsMovement=10
+    triggerScorePoint=50
+    triggerSpawnObjects=100
+    
+    #Game state
+    isGameOver=false
+}
+
 function createBoard {
     for((i=0; i<numRows; i++)) do
         for((j=0; j <numCols; j++)) do
@@ -167,6 +172,77 @@ function createBoard {
     boardMatrix[2,0]=$playerChar
 }
 
+
+## NEW GAME LOOP FUNCTION ##
+function newGame {
+    clear
+    while [[ $isGameOver == false ]]; do
+        #read for reading keyboard input
+        #-n 1 (Read only 1 character per press)
+        #-t (Wait that for user input)
+        if read -n 1 -t 0.001 key; then
+            doKeyPressAction $key
+        fi
+        #Check timers
+        if ((objectsMovementTimer >= triggerObjectsMovement)); then
+            moveBoardObjects
+            objectsMovementTimer=0
+        fi
+        if ((spawnObjectsTimer >= triggerSpawnObjects)); then
+            spawnObjects
+            spawnObjectsTimer=0
+        fi
+        if ((backgroundMovementTimer >= triggerBackgroundMovement)); then
+            moveBackground
+            backgroundMovementTimer=0
+        fi
+        if ((scorePointsTimer == triggerScorePoint)); then
+            scorePoints 1
+            if ((score % 10 == 0)); then
+                levelUp
+            fi
+            scorePointsTimer=0
+        fi
+        #Blinking animation on the last 100 ticks of ivnincibility
+        if [[ $isPlayerInvincible == true ]]; then
+            if ((invincibilityTimer >= 400 && invincibilityTimer % 10 == 0)); then
+                if [[ $playerChar == "$playerInvincibleChar" ]]; then
+                    playerChar="$playerDefaultChar"
+                else
+                    playerChar="$playerInvincibleChar"
+                fi
+            fi
+        fi
+        #On each frame, I check for collisions with the player
+        checkCollisions
+        #This timer has to be checked after collisions. If not, the last frame a player
+        #is invincible it could recieve damage, wihch shouldn't happen
+        if [[ $isPlayerInvincible == true ]]; then
+            if ((invincibilityTimer == triggerEndInvincibility)); then
+                endInvincibility
+            fi
+        fi
+        #Add 1 to timers in each frame
+        ((
+            objectsMovementTimer++,
+            backgroundMovementTimer++,
+            scorePointsTimer++,
+            spawnObjectsTimer++
+        ))
+        if [[ $isPlayerInvincible == true ]]; then
+            ((invincibilityTimer++))
+        fi
+        #Print current state of the screen (frame)
+        printFrame
+        #Every 16.67ms (60fps)
+        sleep 0.0166666666667
+    done
+    clear
+    echo "GAME OVER ☠"
+}
+
+
+## GAME FUNCTIONS ##
 function moveBackground {
     for((i=0; i<numCols; i++)) do
         local currentChar="${backgroundTrees[$i]}"
@@ -439,73 +515,5 @@ function doKeyPressAction {
     esac
 }
 
-function newGame {
-    clear
-    createBoard
-    #Game loop
-    while [[ $isGameOver == false ]]; do
-        #read for reading keyboard input
-        #-n 1 (Read only 1 character per press)
-        #-t (Wait that for user input)
-        if read -n 1 -t 0.001 key; then
-            doKeyPressAction $key
-        fi
-        #Check timers
-        if ((objectsMovementTimer >= triggerObjectsMovement)); then
-            moveBoardObjects
-            objectsMovementTimer=0
-        fi
-        if ((spawnObjectsTimer >= triggerSpawnObjects)); then
-            spawnObjects
-            spawnObjectsTimer=0
-        fi
-        if ((backgroundMovementTimer >= triggerBackgroundMovement)); then
-            moveBackground
-            backgroundMovementTimer=0
-        fi
-        if ((scorePointsTimer == triggerScorePoint)); then
-            scorePoints 1
-            if ((score % 10 == 0)); then
-                levelUp
-            fi
-            scorePointsTimer=0
-        fi
-        #Blinking animation on the last 100 ticks of ivnincibility
-        if [[ $isPlayerInvincible == true ]]; then
-            if ((invincibilityTimer >= 400 && invincibilityTimer % 10 == 0)); then
-                if [[ $playerChar == "$playerInvincibleChar" ]]; then
-                    playerChar="$playerDefaultChar"
-                else
-                    playerChar="$playerInvincibleChar"
-                fi
-            fi
-        fi
-        #On each frame, I check for collisions with the player
-        checkCollisions
-        #This timer has to be checked after collisions. If not, the last frame a player
-        #is invincible it could recieve damage, wihch shouldn't happen
-        if [[ $isPlayerInvincible == true ]]; then
-            if ((invincibilityTimer == triggerEndInvincibility)); then
-                endInvincibility
-            fi
-        fi
-        #Add 1 to timers in each frame
-        ((
-            objectsMovementTimer++,
-            backgroundMovementTimer++,
-            scorePointsTimer++,
-            spawnObjectsTimer++
-        ))
-        if [[ $isPlayerInvincible == true ]]; then
-            ((invincibilityTimer++))
-        fi
-        #Print current state of the screen (frame)
-        printFrame
-        #Every 16.67ms (60fps)
-        sleep 0.0166666666667
-    done
-    clear
-    echo "GAME OVER ☠"
-}
-
+## GAME ENTRY POINT ##
 gameMenu
