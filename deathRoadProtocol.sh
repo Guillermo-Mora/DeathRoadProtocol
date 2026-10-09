@@ -4,6 +4,8 @@
 #-icanon to read input without the need of pressing Enter
 #-echo for preventing the key presses to apear on screen
 stty -icanon -echo
+#Makes the cursor invisible, so you can't see it blinking
+echo -e "\033[?25l"
 
 ## GLOBAL VARIABLES ##
 #Game matrix
@@ -467,15 +469,11 @@ function printFrame {
     \n┃$backgroundTreesString┃
     \n┃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
     \n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
-    #I now do the clear of the screen here to reduce screen flickering as much as possible.
-    #As converting the matrix to a string can also take some CPU time to display
-    #Clear screen each frame after all the calculations have been performed
-    #This is what causes flickering on some terminal emulators, as all the screen
-    #is being cleared and generated again, and not the moving parts only. However, I still don't
-    #know how to solve this.
-    clear
-    #Print the new frame on screen
-    echo -e $displayBoard
+    #Here I print the new frame on screen in the same position as the previous one, so the screen gets overwritten,
+    # without having to clear the screen, and making the blinking effect completely dissapear.
+    #\033[1;1H -> To position the cursor in (1,1) coords inside the terminal, then I write the board with another echo.
+    #I tried doing it with a same echo, but it destroyed the ui for some reason, adding spaces where they shouldn't be, etc.
+    echo -e "\033[1;1H" && echo -e $displayBoard;
 }
 
 function moveBoardObjects {
