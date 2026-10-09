@@ -1,8 +1,7 @@
 #!/bin/bash
 
-#Whenever the script finishes, gets cancelled with Ctrl + C or gets killed (EXIT, INT or TERM),
-# I restore the terminal state and make the cursor visible again
-trap 'stty icanon echo; echo -e "\033[?25h"' EXIT INT TERM
+#Whenever the script finishes, I restore the terminal state and make the cursor visible again
+trap 'stty icanon echo; echo -e "\033[?25h"' EXIT
 
 #stty for configuring the terminal behavior
 #-icanon to read input without the need of pressing Enter
