@@ -315,7 +315,7 @@ function levelUp {
     if ((triggerObjectsMovement > 1)); then
         ((triggerObjectsMovement--))
     fi
-    if ((triggerSpawnObjects > 5)); then
+    if ((triggerSpawnObjects > 10)); then
         ((triggerSpawnObjects -= 5))
     fi
     if ((level % 2 == 0 && triggerBackgroundMovement > 2)); then
