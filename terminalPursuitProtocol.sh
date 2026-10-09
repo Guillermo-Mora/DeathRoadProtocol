@@ -67,14 +67,34 @@ GAME TITLE HERE, AS THE CURRENT ONE IS NOT WHAT THE ACTUAL GAME DOES
 
 
 ⋄ GitHub: https://github.com/Guillermo-Mora/TerminalPursuitProtocol
+
+⋄ Guillermo Mora Mortes
 "
         while true; do
             read -n 1 optionSelected
             case "$optionSelected" in
                 1)
-                    setGameVariables
-                    createBoard
-                    newGame
+                    local continueGameOption
+                    local continueGame=true
+                    while [[ $continueGame == true ]]; do
+                        setGameVariables
+                        createBoard
+                        newGame
+                        gameOverScreen
+                        while true; do
+                            read -n 1 continueGameOption
+                            case $continueGameOption in
+                                1)
+                                    continueGame=true
+                                    break
+                                    ;;
+                                2)
+                                    continueGame=false
+                                    break
+                                    ;;
+                            esac
+                        done
+                    done
                     break
                     ;;
                 2)
@@ -94,7 +114,7 @@ GAME TITLE HERE, AS THE CURRENT ONE IS NOT WHAT THE ACTUAL GAME DOES
 
 function howToPlayMenu {
     clear
-    echo -e "
+    echo "
 ⋄⠀CONTROLS
 
 ⠀⠀⠀⠀⠀┏━━━┓
@@ -116,6 +136,27 @@ $enemyBombChar [Bomb] Blows your car into a thousand pieces
 ⠀→⠀Press any key to return to main menu⠀
 "
 read -n 1
+}
+
+function gameOverScreen {
+    clear
+    echo "
+ ▗▄▄▖ ▗▄▖ ▗▖  ▗▖▗▄▄▄▖     ▗▄▖ ▗▖  ▗▖▗▄▄▄▖▗▄▄▖ 
+▐▌   ▐▌ ▐▌▐▛▚▞▜▌▐▌       ▐▌ ▐▌▐▌  ▐▌▐▌   ▐▌ ▐▌
+▐▌▝▜▌▐▛▀▜▌▐▌  ▐▌▐▛▀▀▘    ▐▌ ▐▌▐▌  ▐▌▐▛▀▀▘▐▛▀▚▖
+▝▚▄▞▘▐▌ ▐▌▐▌  ▐▌▐▙▄▄▖    ▝▚▄▞▘ ▝▚▞▘ ▐▙▄▄▖▐▌ ▐▌                
+
+⋄⠀SCORE: $scoreString
+⋄⠀LEVEL: $level
+
+⠀→⠀Press a number to select an option⠀
+┏━━━┓⠀┏━━━━━━━━━━━━━━━━━━━━━┓
+┃⠀1⠀┃⠀┃⠀NEW GAME⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀┃
+┗━━━┛⠀┗━━━━━━━━━━━━━━━━━━━━━┛
+┏━━━┓⠀┏━━━━━━━━━━━━━━━━━━━━━┓
+┃⠀2⠀┃⠀┃⠀RETURN TO MAIN MENU⠀┃
+┗━━━┛⠀┗━━━━━━━━━━━━━━━━━━━━━┛
+    "
 }
 
 
@@ -237,8 +278,6 @@ function newGame {
         #Every 16.67ms (60fps)
         sleep 0.0166666666667
     done
-    clear
-    echo "GAME OVER ☠"
 }
 
 
