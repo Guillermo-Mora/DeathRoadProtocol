@@ -42,14 +42,6 @@ Alternatively, you can run the script directly with Bash:
 bash deathRoadProtocol.sh
 ```
 
-## Known Issues
-
-### Terminal Screen Flickering
-
-Depending on the terminal emulator, some screen flickering may occur during gameplay. I have made efforts to minimize this effect, but it may still be noticeable in certain environments.
-
-In my testing, the game ran without any screen flickering in Konsole. However, I have only tested a limited number of terminal emulators, so results may vary.
-
 ## Built With
 
 ![Bash](images/bash-logo.png)
