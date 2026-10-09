@@ -1,25 +1,57 @@
-# Terminal Pursuit Protocol
+# Death Road Protocol
 
-TPP (Terminal Pursuit Protocol) is a terminal-based video game where you control a car and try to escape from the police on an infinite road where objects, obstacles, and other elements appear dynamically as you advance.
+A terminal-based arcade game developed entirely in Bash.
 
-## Run the videogame
+## About The Game
 
-This game runs entirely from a single `.sh` file and requires a Bash-compatible terminal. It can be executed on Linux and macOS, as well as on Windows using WSL, Git Bash, or another Bash-compatible environment.
+**Death Road Protocol** is a terminal-based arcade game where you take control of a car racing down an endless road. Dodge or eliminate enemies, collect power-ups, and try to survive as the speed steadily increases.
 
-* Download the `terminalPursuitProtocol.sh` file from this repository.
+The game features a horizontally scrolling view rendered directly in the terminal, delivering a fast-paced arcade experience using nothing but Bash.
 
-* Open your Bash terminal and give the file execution permission.
+## Gameplay Preview
+![Gameplay](images/gameplay.png)
+![Gameplay](images/main-menu.png)
+
+## Requirements
+
+* A Bash-compatible terminal.
+
+The game is intended for Linux and macOS. On Windows, you may be able to run it through WSL or another compatible Bash environment.
+
+## How To Play It
+
+The game can be launched from a single shell script.
+
+1. Download `deathRoadProtocol.sh` from this repository.
+
+2. Open a Bash terminal in the directory containing the file.
+
+3. Grant execution permission:
+
+   ```bash
+   chmod +x deathRoadProtocol.sh
+   ```
+
+4. Start the game:
+
+   ```bash
+   ./deathRoadProtocol.sh
+   ```
+
+Alternatively, you can run the script directly with Bash:
 
 ```bash
-chmod +x terminalPursuitProtocol.sh
+bash deathRoadProtocol.sh
 ```
 
-* Now run the file in your Bash terminal to start the game.
+## Known Issues
 
-```bash
-./terminalPursuitProtocol.sh
-```
+### Terminal Screen Flickering
 
-## Important
+Depending on the terminal emulator, some screen flickering may occur during gameplay. I have made efforts to minimize this effect, but it may still be noticeable in certain environments.
 
-Depending on the terminal emulator you are using to run the game, some screen flickering can be percieved. I reduced this screen flickering as much as I could, but it's still a little noticeable when running the game in some terminal emulators. From my testing, the game runs with no screen flickering in the ```Konsole``` terminal emulator. There are probably more where no screen flickering appears, but I've only tested like 4 different terminal emulators.
+In my testing, the game ran without any screen flickering in Konsole. However, I have only tested a limited number of terminal emulators, so results may vary.
+
+## Built With
+
+![Bash](images/bash-logo.png)
