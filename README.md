@@ -4,9 +4,9 @@ A terminal-based arcade game developed entirely in Bash.
 
 ## About The Game
 
-**Death Road Protocol** is a terminal-based arcade game where you take control of a car racing down an endless road. Dodge or eliminate enemies, collect power-ups, and try to survive as the speed steadily increases.
+**Death Road Protocol** is a terminal-based arcade game where you take control of a car racing down an endless road. Dodge enemies, collect power-ups, and try to survive as long as you can as the speed and enemies steadily increase.
 
-The game features a horizontally scrolling view rendered directly in the terminal, delivering a fast-paced arcade experience using nothing but Bash.
+The game features a side-scrolling view rendered directly in the terminal.
 
 ## Gameplay Preview
 ![Gameplay](images/gameplay.png)
