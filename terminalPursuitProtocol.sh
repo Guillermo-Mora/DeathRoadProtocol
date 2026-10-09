@@ -51,8 +51,16 @@ function gameMenu {
     while true; do
         clear
         echo "
-GAME TITLE HERE, AS THE CURRENT ONE IS NOT WHAT THE ACTUAL GAME DOES
+_____________________________________  __   ______________________________ 
+___  __ \__  ____/__    |__  __/__  / / /   ___  __ \_  __ \__    |__  __ \ 
+__  / / /_  __/  __  /| |_  /  __  /_/ /    __  /_/ /  / / /_  /| |_  / / /
+_  /_/ /_  /___  _  ___ |  /   _  __  /     _  _, _// /_/ /_  ___ |  /_/ / 
+/_____/ /_____/  /_/  |_/_/    /_/ /_/      /_/ |_| \____/ /_/  |_/_____/  
 
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀   ___  ___  ____  __________  _________  __ 
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀  / _ \/ _ \/ __ \/_  __/ __ \/ ___/ __ \/ / 
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ / ___/ , _/ /_/ / / / / /_/ / /__/ /_/ / /__
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀/_/  /_/|_|\____/ /_/  \____/\___/\____/____/                                        
 
 ⠀→⠀Press a number to select an option⠀
 ┏━━━┓⠀┏━━━━━━━━━━━━━━┓
@@ -68,7 +76,7 @@ GAME TITLE HERE, AS THE CURRENT ONE IS NOT WHAT THE ACTUAL GAME DOES
 
 ⋄ GitHub: https://github.com/Guillermo-Mora/TerminalPursuitProtocol
 
-⋄ Guillermo Mora Mortes
+⋄ Created by Guillermo Mora Mortes
 "
         while true; do
             read -n 1 optionSelected
@@ -363,15 +371,15 @@ function endInvincibility {
 function spawnObjects {
     local generatesPowerUp=false
     local generatesEnemies=false
-    if ((RANDOM++ % 100 <= 12)); then
+    if ((RANDOM % 100 + 1 <= 12)); then
         generatesPowerUp=true
     fi
-    if ((RANDOM++ % 100 <= 95)); then
+    if ((RANDOM % 100 + 1 <= 95)); then
         generatesEnemies=true
     fi
     if $generatesEnemies; then
         local enemiesQuantity
-        local enemiesQuantityRandom=$((RANDOM++ % 100))
+        local enemiesQuantityRandom=$((RANDOM % 100 + 1))
         if ((enemiesQuantityRandom <= 5)); then
             enemiesQuantity=4
         elif ((enemiesQuantityRandom <= 25)); then
@@ -384,11 +392,11 @@ function spawnObjects {
     fi
     if $generatesPowerUp; then
         local powerUpChar
-        local powerUpRandom=$((RANDOM++ % 100))
-        if ((powerUpRandom <= 15)); then
-            powerUpChar="$starChar"
-        elif ((powerUpRandom <= 32)); then
+        local powerUpRandom=$((RANDOM % 100 + 1))
+        if ((powerUpRandom <= 10)); then
             powerUpChar="$heartChar"
+        elif ((powerUpRandom <= 30)); then
+            powerUpChar="$starChar"
         else
             powerUpChar="$wheelChar"
         fi
@@ -411,7 +419,7 @@ function spawnObjects {
                 fi
                 randomPositionCurrentChar="${boardMatrix[$enmeyRandomPosition,$((numCols-1))]}"
             done
-            local enemyRandomType=$((RANDOM++ % 100))
+            local enemyRandomType=$((RANDOM % 100 + 1))
             local enemy
             if ((enemyRandomType <= 15)); then
                 enemy="$enemyBombChar" 
@@ -507,7 +515,7 @@ function checkCollisions {
             ;;
         $heartChar)
             getWheel $((4 - playerWheels))
-            scorePoints 50
+            scorePoints 100
             ;;
         $starChar)
             becomeInvincible
