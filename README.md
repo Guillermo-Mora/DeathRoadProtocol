@@ -20,8 +20,6 @@ The game is intended for Linux and macOS. On Windows, you may be able to run it 
 
 ## How To Play It
 
-The game can be launched from a single shell script.
-
 1. Download `deathRoadProtocol.sh` from this repository.
 
 2. Open a Bash terminal in the directory containing the file.
